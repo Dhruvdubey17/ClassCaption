@@ -1,0 +1,3 @@
+InheritParentConfig: true
+# doctest assertions expand into branches, which inflates the complexity score of every test.
+Checks: -readability-function-cognitive-complexity

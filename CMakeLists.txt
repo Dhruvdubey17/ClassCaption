@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CLASSCAPTION_COREML "Run the Whisper encoder on the Neural Engine" ON)
+option(CLASSCAPTION_TSAN "Build ClassCaption code with ThreadSanitizer" OFF)
 
 set(WHISPER_COREML ${CLASSCAPTION_COREML} CACHE BOOL "" FORCE)
 # Lets the same binary run when the Core ML encoder is missing, which is how cpu and metal modes work.
@@ -17,6 +18,12 @@ set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/whisper.cpp EXCLUDE_FROM_ALL SYSTEM)
 
 set(CLASSCAPTION_WARNINGS -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Werror)
+# Only our own code is instrumented. whisper.cpp's thread pool trips ThreadSanitizer on its own
+# lock-free sync and makes every test many times slower.
+if(CLASSCAPTION_TSAN)
+    add_compile_options(-fsanitize=thread)
+    add_link_options(-fsanitize=thread)
+endif()
 
 add_library(miniaudio STATIC third_party/miniaudio/miniaudio.c)
 target_include_directories(miniaudio SYSTEM PUBLIC third_party/miniaudio)
@@ -31,8 +38,12 @@ add_library(classcaption_core
     src/ring_buffer.cpp
     src/vtt_writer.cpp
     src/wav.cpp
+    src/whisper_transcriber.cpp
 )
-target_link_libraries(classcaption_core PRIVATE miniaudio)
+target_link_libraries(classcaption_core PRIVATE miniaudio whisper)
+if(CLASSCAPTION_COREML)
+    target_compile_definitions(classcaption_core PRIVATE CLASSCAPTION_COREML)
+endif()
 target_include_directories(classcaption_core PUBLIC include)
 target_compile_options(classcaption_core PRIVATE ${CLASSCAPTION_WARNINGS})
 
@@ -43,6 +54,7 @@ add_executable(classcaption_tests
     tests/file_source_test.cpp
     tests/mic_source_test.cpp
     tests/ring_buffer_test.cpp
+    tests/transcriber_test.cpp
     tests/vtt_writer_test.cpp
     tests/wav_test.cpp
 )

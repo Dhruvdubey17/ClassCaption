@@ -24,7 +24,7 @@ fetch_coreml_encoder() {
     local name="$1"
     [[ -d "models/ggml-$name-encoder.mlmodelc" ]] && return
     fetch "$whisper_src/ggml-$name-encoder.mlmodelc.zip" "ggml-$name-encoder.mlmodelc.zip"
-    unzip -q "models/ggml-$name-encoder.mlmodelc.zip" -d models
+    unzip -q "models/ggml-$name-encoder.mlmodelc.zip" -d models -x "__MACOSX/*"
     rm "models/ggml-$name-encoder.mlmodelc.zip"
 }
 
