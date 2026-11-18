@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # The one command that decides whether a change is ready: CI runs exactly this.
+# Optimized with debug info: whisper.cpp unoptimized makes the inference tests several times slower.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 llvm_bin="$(brew --prefix llvm)/bin"
 
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug "$@"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo "$@"
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 

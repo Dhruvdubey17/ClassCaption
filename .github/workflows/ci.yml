@@ -27,6 +27,7 @@ jobs:
       - run: scripts/check.sh -DCLASSCAPTION_COREML=OFF
       # The pipeline shares audio across threads, so every test also runs under ThreadSanitizer.
       - run: |
-          cmake -S . -B build-tsan -DCLASSCAPTION_COREML=OFF -DCLASSCAPTION_TSAN=ON
+          cmake -S . -B build-tsan -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCLASSCAPTION_COREML=OFF \
+            -DCLASSCAPTION_TSAN=ON
           cmake --build build-tsan --target classcaption_tests --parallel
           ctest --test-dir build-tsan --output-on-failure
