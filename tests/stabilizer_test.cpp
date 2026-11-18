@@ -88,3 +88,24 @@ TEST_CASE("finishing an utterance with nothing pending gives nothing") {
     Stabilizer stabilizer;
     CHECK(stabilizer.finish_utterance().empty());
 }
+
+TEST_CASE("a final word whose timing drifts in a later pass is not repeated") {
+    // Whisper's word times move by a few hundred ms between passes. Here "country" was final
+    // ending at 900 ms, then shows up again ending at 1150 ms.
+    const auto at = [](string text, int start, int end) {
+        return Word{.text = std::move(text),
+                    .start = chrono::milliseconds(start),
+                    .end = chrono::milliseconds(end)};
+    };
+    Stabilizer stabilizer;
+    stabilizer.update({at("what", 0, 300), at("your", 300, 600), at("country", 600, 900)});
+    stabilizer.update(
+        {at("what", 0, 300), at("your", 300, 600), at("country", 600, 900), at("can", 900, 1200)});
+    const vector<Word> drifted = {at("what", 0, 300), at("your", 300, 750),
+                                  at("country", 750, 1150), at("can", 1150, 1400),
+                                  at("do", 1400, 1600)};
+    const auto third = stabilizer.update(drifted);
+    const auto fourth = stabilizer.update(drifted);
+    CHECK(text_of(third.finalized) == "can");
+    CHECK(text_of(fourth.finalized) == "do");
+}

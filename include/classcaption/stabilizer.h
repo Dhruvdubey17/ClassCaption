@@ -28,8 +28,12 @@ class Stabilizer {
     // Words of a pass that come after everything already final.
     [[nodiscard]] std::vector<Word> unfinalized(const std::vector<Word>& hypothesis) const;
 
+    // Drops leading words that repeat the end of what is already final.
+    [[nodiscard]] std::vector<Word> without_repeat_of_final(std::vector<Word> words) const;
+
     std::vector<Word> previous_;
     std::chrono::milliseconds finalized_until_{0};
+    std::vector<Word> recent_final_; // the last few final words of this utterance
 };
 
 } // namespace classcaption
