@@ -43,6 +43,7 @@ add_library(classcaption_core
     src/finalize.cpp
     src/mic_source.cpp
     src/pipeline.cpp
+    src/ppm.cpp
     src/ring_buffer.cpp
     src/session_files.cpp
     src/speech_gate.cpp
@@ -99,6 +100,7 @@ add_executable(classcaption_tests
     tests/finalize_test.cpp
     tests/mic_source_test.cpp
     tests/pipeline_test.cpp
+    tests/ppm_test.cpp
     tests/ring_buffer_test.cpp
     tests/session_files_test.cpp
     tests/speech_gate_test.cpp

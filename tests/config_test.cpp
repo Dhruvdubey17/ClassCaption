@@ -120,3 +120,8 @@ TEST_CASE("measurement settings are off by default") {
     CHECK_FALSE(fast.realtime_input);
     CHECK(fast.event_log == "events.tsv");
 }
+
+TEST_CASE("saving window frames is off unless a folder is given") {
+    CHECK(Config{}.frames_dir.empty());
+    CHECK(parse_config("frames_dir = docs/frames").frames_dir == "docs/frames");
+}

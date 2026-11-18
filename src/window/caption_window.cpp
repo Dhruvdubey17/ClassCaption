@@ -1,13 +1,20 @@
 #include "caption_window.h"
 
+#include "classcaption/ppm.h"
+
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
+#include <format>
+#include <fstream>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 using namespace std;
 
@@ -25,6 +32,7 @@ constexpr float kControlsFontSize = 16.0F;
 // Redraw at most 30 times a second: captions change about once a second, and a laptop on battery
 // through a lecture should not spend power on frames nobody needs.
 constexpr double kFrameWait = 1.0 / 30.0;
+constexpr auto kFrameSaveInterval = chrono::milliseconds(200);
 
 struct Theme {
     ImVec4 background;
@@ -108,7 +116,15 @@ void change_font_size(ViewSettings& view, float delta) {
 }
 
 void draw_controls(GLFWwindow* window, ViewSettings& view, bool finished) {
+    const Theme& theme = view.dark ? kDark : kLight;
     ImGui::PushFont(nullptr, kControlsFontSize);
+    // ImGui's own colors assume a dark background, so draw the controls in the theme's colors,
+    // with a visible border on the checkbox in both themes.
+    ImGui::PushStyleColor(ImGuiCol_Text, theme.text);
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, theme.text);
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, theme.background);
+    ImGui::PushStyleColor(ImGuiCol_Border, theme.draft);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0F);
     if (ImGui::Button("A-")) {
         change_font_size(view, -kFontStep);
     }
@@ -128,6 +144,8 @@ void draw_controls(GLFWwindow* window, ViewSettings& view, bool finished) {
     }
     ImGui::SameLine();
     ImGui::TextUnformatted(finished ? "Finished" : "Listening");
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(4);
     ImGui::PopFont();
 }
 
@@ -194,13 +212,52 @@ void draw_frame(GLFWwindow* window, const CaptionLog& log, ImFont* font, ViewSet
     glClearColor(theme.background.x, theme.background.y, theme.background.z, 1.0F);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    glfwSwapBuffers(window);
 }
+
+// Reads the frame just drawn, before it is swapped to the screen. Reading back our own frame needs
+// no screen recording permission, unlike a screenshot of the display.
+void save_frame(GLFWwindow* window, const filesystem::path& path) {
+    int width = 0;
+    int height = 0;
+    glfwGetFramebufferSize(window, &width, &height);
+    vector<uint8_t> rgba(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_BACK);
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+    ofstream(path, ios::binary) << ppm_image(width, height, rgba);
+}
+
+// Saves a numbered frame every kFrameSaveInterval while captions run, then a last one when the
+// audio has ended.
+class FrameRecorder {
+  public:
+    explicit FrameRecorder(filesystem::path dir) : dir_(std::move(dir)) {
+        if (!dir_.empty()) {
+            filesystem::create_directories(dir_);
+        }
+    }
+
+    [[nodiscard]] bool enabled() const { return !dir_.empty(); }
+
+    void maybe_save(GLFWwindow* window, bool force) {
+        const auto now = chrono::steady_clock::now();
+        if (!enabled() || (!force && now < next_save_)) {
+            return;
+        }
+        save_frame(window, dir_ / format("frame-{:05}.ppm", ++count_));
+        next_save_ = now + kFrameSaveInterval;
+    }
+
+  private:
+    filesystem::path dir_;
+    int count_ = 0;
+    chrono::steady_clock::time_point next_save_;
+};
 
 } // namespace
 
 void show_caption_window(const CaptionLog& log, const atomic<bool>& stop,
-                         const atomic<bool>& finished) {
+                         const atomic<bool>& finished, const filesystem::path& frames_dir) {
     const GlfwSession glfw;
     const auto window = open_window();
 
@@ -215,9 +272,17 @@ void show_caption_window(const CaptionLog& log, const atomic<bool>& stop,
 
     ImFont* const font = load_caption_font();
     ViewSettings view;
+    FrameRecorder recorder(frames_dir);
     while (glfwWindowShouldClose(window.get()) == GLFW_FALSE && !stop) {
         glfwWaitEventsTimeout(kFrameWait);
-        draw_frame(window.get(), log, font, view, finished);
+        // Read before drawing, so the last saved frame already shows every caption.
+        const bool audio_done = finished;
+        draw_frame(window.get(), log, font, view, audio_done);
+        recorder.maybe_save(window.get(), audio_done);
+        glfwSwapBuffers(window.get());
+        if (audio_done && recorder.enabled()) {
+            break;
+        }
     }
 
     ImGui_ImplOpenGL3_Shutdown();

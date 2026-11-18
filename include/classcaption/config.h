@@ -35,6 +35,9 @@ struct Config {
     bool realtime_input = true;
     // When set, logs when each word appeared on screen, for measuring caption delay.
     std::filesystem::path event_log;
+    // When set, the window saves a frame every 200 ms into this folder and closes itself once the
+    // audio has ended. Used to make the README screenshot and demo.
+    std::filesystem::path frames_dir;
 };
 
 class ConfigError : public std::runtime_error {

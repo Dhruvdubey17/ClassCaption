@@ -86,7 +86,7 @@ unique_ptr<AudioSource> open_source(const Config& config) {
 // Runs the pipeline on a worker thread while the window owns the main thread. Closing the window
 // ends the session, and an error on the worker is rethrown here once it has stopped.
 void run_with_window(Pipeline& pipeline, AudioSource& source, WavWriter* recording,
-                     const CaptionLog& log) {
+                     const CaptionLog& log, const filesystem::path& frames_dir) {
     atomic<bool> finished{false};
     exception_ptr failure;
     thread worker([&] {
@@ -97,7 +97,7 @@ void run_with_window(Pipeline& pipeline, AudioSource& source, WavWriter* recordi
         }
         finished = true;
     });
-    show_caption_window(log, stop_requested, finished);
+    show_caption_window(log, stop_requested, finished, frames_dir);
     stop_requested = true;
     worker.join();
     if (failure) {
@@ -135,7 +135,7 @@ int caption(const Config& config) {
         event_log->mark_start();
     }
     if (config.show_window) {
-        run_with_window(pipeline, *source, recording_or_null, window_log);
+        run_with_window(pipeline, *source, recording_or_null, window_log, config.frames_dir);
     } else {
         pipeline.run(*source, stop_requested, recording_or_null);
     }

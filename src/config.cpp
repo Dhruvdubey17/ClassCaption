@@ -99,6 +99,8 @@ void apply_setting(Config& config, string_view key, string_view value) {
         config.realtime_input = parse_bool(key, value);
     } else if (key == "event_log") {
         config.event_log = value;
+    } else if (key == "frames_dir") {
+        config.frames_dir = value;
     } else {
         throw ConfigError(format("unknown setting '{}'", key));
     }
