@@ -4,7 +4,9 @@
 
 Live lecture captions that run entirely on a Mac, with Wi-Fi off, for students who are hard of hearing or still building their English.
 
-<!-- Demo GIF: captions appearing during a lecture with Wi-Fi turned off. -->
+![Captions appearing live: grey words are drafts that may still change, white words are final](docs/demo.gif)
+
+The demo plays the 11-second clip that ships with whisper.cpp through the live pipeline at real-time speed, on the Neural Engine. Each line shows in grey first and turns white once two passes agree on it.
 
 ## How to run
 
