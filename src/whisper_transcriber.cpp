@@ -131,15 +131,27 @@ chrono::milliseconds to_millis(int64_t whisper_ticks) {
 struct Transcriber::Engine {
     ContextPtr context;
     string language;
+    string vad_model;
     whisper_full_params params{};
 };
 
-Transcriber::Transcriber(const Config& config, const filesystem::path& model)
+Transcriber::Transcriber(const Config& config, const filesystem::path& model, Silence silence)
     : engine_(make_unique<Engine>()) {
+    if (silence == Silence::skip && !filesystem::exists(config.vad_model)) {
+        throw TranscriberError(format("VAD model not found at {}. Run scripts/fetch_models.sh",
+                                      config.vad_model.string()));
+    }
     engine_->context = load_model(config, model);
     engine_->language = config.language;
-    // params holds a pointer into language, so it is built after language has its final home.
+    engine_->vad_model = config.vad_model.string();
+    // params points into language and vad_model, so it is built after they have their final home.
     engine_->params = decoding_params(engine_->language);
+    if (silence == Silence::skip) {
+        engine_->params.vad = true;
+        engine_->params.vad_model_path = engine_->vad_model.c_str();
+        engine_->params.vad_params = whisper_vad_default_params();
+        engine_->params.vad_params.threshold = config.vad_threshold;
+    }
 }
 
 Transcriber::~Transcriber() = default;
@@ -166,18 +178,19 @@ vector<Word> Transcriber::transcribe(span<const float> audio,
     const whisper_token first_special = whisper_token_eot(context);
     for (int segment = 0; segment < whisper_full_n_segments(context); ++segment) {
         for (int token = 0; token < whisper_full_n_tokens(context, segment); ++token) {
-            const whisper_token_data data = whisper_full_get_token_data(context, segment, token);
-            if (data.id >= first_special) {
+            if (whisper_full_get_token_id(context, segment, token) >= first_special) {
                 continue;
             }
+            // These map times back to the original audio when VAD has cut silence out.
+            const auto start = to_millis(whisper_full_get_token_t0(context, segment, token));
+            const auto end = to_millis(whisper_full_get_token_t1(context, segment, token));
             const string_view piece = whisper_full_get_token_text(context, segment, token);
             if (words.empty() || piece.starts_with(' ')) {
-                words.push_back(
-                    {.text = "", .start = to_millis(data.t0), .end = to_millis(data.t1)});
+                words.push_back({.text = "", .start = start, .end = end});
             }
             Word& word = words.back();
             word.text += piece.starts_with(' ') ? piece.substr(1) : piece;
-            word.end = max(word.end, to_millis(data.t1));
+            word.end = max(word.end, end);
         }
     }
     erase_if(words, [](const Word& word) { return word.text.empty(); });

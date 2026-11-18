@@ -22,7 +22,7 @@ filesystem::path finalize_recording(const Config& config, const filesystem::path
 
     Config final_config = config;
     final_config.backend = config.final_backend;
-    Transcriber transcriber(final_config, config.final_model);
+    Transcriber transcriber(final_config, config.final_model, Silence::skip);
     const vector<Word> words = transcriber.transcribe(read_wav(recording), on_progress);
 
     VttSink sink(captions);

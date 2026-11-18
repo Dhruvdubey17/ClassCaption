@@ -81,3 +81,27 @@ TEST_CASE("the live model transcribes the fixture clip on every backend" * docte
               string::npos);
     }
 }
+
+TEST_CASE("skipping silence keeps word times on the recording's timeline") {
+    // Long silences are where Whisper can loop on one phrase, so whole recordings skip them.
+    Config config = cpu_config();
+    config.vad_model = fixtures::kVadModel;
+    Transcriber transcriber(config, fixtures::kTinyModel, Silence::skip);
+
+    vector<float> audio(static_cast<size_t>(kSampleRate) * 20, 0.0F);
+    const vector<float> speech = read_wav(fixtures::kJfkWav);
+    audio.insert(audio.end(), speech.begin(), speech.end());
+    const vector<Word> words = transcriber.transcribe(audio);
+
+    CHECK(normalized_text(words).find("ask not what your country can do for you") != string::npos);
+    REQUIRE_FALSE(words.empty());
+    CHECK(words.front().start >= 19'500ms);
+    CHECK(words.back().end <= 31'500ms);
+}
+
+TEST_CASE("skipping silence needs the VAD model") {
+    Config config = cpu_config();
+    config.vad_model = "models/nope-vad.bin";
+    CHECK_THROWS_WITH_AS(Transcriber(config, fixtures::kTinyModel, Silence::skip),
+                         doctest::Contains("models/nope-vad.bin"), TranscriberError);
+}

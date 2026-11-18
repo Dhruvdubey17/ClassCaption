@@ -4,6 +4,7 @@
 #include "classcaption/config.h"
 
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -21,6 +22,10 @@ struct Word {
     std::chrono::milliseconds end{};
 };
 
+// Whether whisper.cpp's own VAD drops silence before transcribing. Live captions already send only
+// speech. A whole recording needs it, or Whisper can repeat one phrase through a long silence.
+enum class Silence : std::uint8_t { keep, skip };
+
 class TranscriberError : public std::runtime_error {
   public:
     using std::runtime_error::runtime_error;
@@ -31,7 +36,8 @@ class TranscriberError : public std::runtime_error {
 class Transcriber {
   public:
     // Loads the model for config.backend. Throws TranscriberError if anything is missing.
-    Transcriber(const Config& config, const std::filesystem::path& model);
+    Transcriber(const Config& config, const std::filesystem::path& model,
+                Silence silence = Silence::keep);
     ~Transcriber();
     Transcriber(const Transcriber&) = delete;
     Transcriber& operator=(const Transcriber&) = delete;
