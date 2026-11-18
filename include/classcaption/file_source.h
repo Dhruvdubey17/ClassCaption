@@ -26,6 +26,7 @@ class FileSource final : public AudioSource {
     void start(RingBuffer& out) override;
     void stop() override;
     [[nodiscard]] bool finished() const override;
+    [[nodiscard]] std::size_t sample_count() const { return samples_.size(); }
 
   private:
     void deliver(RingBuffer& out);

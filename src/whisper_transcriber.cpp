@@ -131,45 +131,22 @@ chrono::milliseconds to_millis(int64_t whisper_ticks) {
 struct Transcriber::Engine {
     ContextPtr context;
     string language;
-    string vad_model;
     whisper_full_params params{};
 };
 
-Transcriber::Transcriber(const Config& config, const filesystem::path& model, Silence silence)
+Transcriber::Transcriber(const Config& config, const filesystem::path& model)
     : engine_(make_unique<Engine>()) {
-    if (silence == Silence::skip && !filesystem::exists(config.vad_model)) {
-        throw TranscriberError(format("VAD model not found at {}. Run scripts/fetch_models.sh",
-                                      config.vad_model.string()));
-    }
     engine_->context = load_model(config, model);
     engine_->language = config.language;
-    engine_->vad_model = config.vad_model.string();
-    // params points into language and vad_model, so it is built after they have their final home.
+    // params holds a pointer into language, so it is built after language has its final home.
     engine_->params = decoding_params(engine_->language);
-    if (silence == Silence::skip) {
-        engine_->params.vad = true;
-        engine_->params.vad_model_path = engine_->vad_model.c_str();
-        engine_->params.vad_params = whisper_vad_default_params();
-        engine_->params.vad_params.threshold = config.vad_threshold;
-    }
 }
 
 Transcriber::~Transcriber() = default;
 
-vector<Word> Transcriber::transcribe(span<const float> audio,
-                                     const function<void(int)>& on_progress) {
+vector<Word> Transcriber::transcribe(span<const float> audio) {
     whisper_context* const context = engine_->context.get();
-    whisper_full_params params = engine_->params;
-    // whisper.cpp hands this pointer back to the callback below, so it must outlive whisper_full.
-    function<void(int)> progress = on_progress;
-    if (progress) {
-        params.progress_callback = [](whisper_context* /*ctx*/, whisper_state* /*state*/,
-                                      int percent, void* callback) {
-            (*static_cast<function<void(int)>*>(callback))(percent);
-        };
-        params.progress_callback_user_data = &progress;
-    }
-    if (whisper_full(context, params, audio.data(), static_cast<int>(audio.size())) != 0) {
+    if (whisper_full(context, engine_->params, audio.data(), static_cast<int>(audio.size())) != 0) {
         throw TranscriberError("whisper.cpp could not transcribe the audio");
     }
 
@@ -181,7 +158,6 @@ vector<Word> Transcriber::transcribe(span<const float> audio,
             if (whisper_full_get_token_id(context, segment, token) >= first_special) {
                 continue;
             }
-            // These map times back to the original audio when VAD has cut silence out.
             const auto start = to_millis(whisper_full_get_token_t0(context, segment, token));
             const auto end = to_millis(whisper_full_get_token_t1(context, segment, token));
             const string_view piece = whisper_full_get_token_text(context, segment, token);
