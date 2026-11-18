@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <span>
 #include <stdexcept>
@@ -37,8 +38,10 @@ class Transcriber {
     Transcriber(Transcriber&&) = delete;
     Transcriber& operator=(Transcriber&&) = delete;
 
-    // Transcribes 16 kHz mono audio. Not thread-safe: use one Transcriber per thread.
-    std::vector<Word> transcribe(std::span<const float> audio);
+    // Transcribes 16 kHz mono audio of any length, reporting progress as a percentage if asked.
+    // Not thread-safe: use one Transcriber per thread.
+    std::vector<Word> transcribe(std::span<const float> audio,
+                                 const std::function<void(int)>& on_progress = {});
 
   private:
     struct Engine;

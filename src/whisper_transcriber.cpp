@@ -144,9 +144,20 @@ Transcriber::Transcriber(const Config& config, const filesystem::path& model)
 
 Transcriber::~Transcriber() = default;
 
-vector<Word> Transcriber::transcribe(span<const float> audio) {
+vector<Word> Transcriber::transcribe(span<const float> audio,
+                                     const function<void(int)>& on_progress) {
     whisper_context* const context = engine_->context.get();
-    if (whisper_full(context, engine_->params, audio.data(), static_cast<int>(audio.size())) != 0) {
+    whisper_full_params params = engine_->params;
+    // whisper.cpp hands this pointer back to the callback below, so it must outlive whisper_full.
+    function<void(int)> progress = on_progress;
+    if (progress) {
+        params.progress_callback = [](whisper_context* /*ctx*/, whisper_state* /*state*/,
+                                      int percent, void* callback) {
+            (*static_cast<function<void(int)>*>(callback))(percent);
+        };
+        params.progress_callback_user_data = &progress;
+    }
+    if (whisper_full(context, params, audio.data(), static_cast<int>(audio.size())) != 0) {
         throw TranscriberError("whisper.cpp could not transcribe the audio");
     }
 

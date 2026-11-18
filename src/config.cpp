@@ -21,7 +21,7 @@ string_view trim(string_view text) {
     return text.substr(first, last - first + 1);
 }
 
-Backend parse_backend(string_view value) {
+Backend parse_backend(string_view key, string_view value) {
     if (value == "coreml") {
         return Backend::coreml;
     }
@@ -31,7 +31,7 @@ Backend parse_backend(string_view value) {
     if (value == "cpu") {
         return Backend::cpu;
     }
-    throw ConfigError("backend must be coreml, metal or cpu");
+    throw ConfigError(format("{} must be coreml, metal or cpu", key));
 }
 
 int parse_positive_int(string_view key, string_view value) {
@@ -72,7 +72,9 @@ bool parse_bool(string_view key, string_view value) {
 
 void apply_setting(Config& config, string_view key, string_view value) {
     if (key == "backend") {
-        config.backend = parse_backend(value);
+        config.backend = parse_backend(key, value);
+    } else if (key == "final_backend") {
+        config.final_backend = parse_backend(key, value);
     } else if (key == "live_model") {
         config.live_model = value;
     } else if (key == "final_model") {

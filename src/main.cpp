@@ -1,6 +1,7 @@
 #include "classcaption/caption_log.h"
 #include "classcaption/config.h"
 #include "classcaption/file_source.h"
+#include "classcaption/finalize.h"
 #include "classcaption/mic_source.h"
 #include "classcaption/pipeline.h"
 #include "classcaption/session_files.h"
@@ -54,8 +55,7 @@ string read_text_file(const filesystem::path& path) {
     return text.str();
 }
 
-Config load_config(int argc, char** argv) {
-    const vector<string> args(argv + 1, argv + argc);
+Config load_config(span<const string> args) {
     const auto [config_file, rest] = take_config_flag(args);
     Config config;
     if (config_file) {
@@ -133,11 +133,34 @@ int caption(const Config& config) {
     return 0;
 }
 
+int finalize(const Config& config, const filesystem::path& recording) {
+    cerr << "After-class pass on " << recording.string() << " with " << config.final_model.string()
+         << ". This takes a while for a full lecture.\n";
+    const filesystem::path captions = finalize_recording(
+        config, recording, [](int percent) { cerr << "\r" << percent << "% " << flush; });
+    cerr << "\nSaved " << captions.string() << '\n';
+    return 0;
+}
+
+constexpr string_view kUsage = "usage: classcaption [--setting value ...]\n"
+                               "       classcaption finalize <recording.wav> [--setting value ...]";
+
 } // namespace
 
 int main(int argc, char** argv) {
     try {
-        return caption(load_config(argc, argv));
+        const vector<string> args(argv + 1, argv + argc);
+        if (!args.empty() && (args[0] == "--help" || args[0] == "-h")) {
+            cout << kUsage << '\n';
+            return 0;
+        }
+        if (!args.empty() && args[0] == "finalize") {
+            if (args.size() < 2) {
+                throw ConfigError(string(kUsage));
+            }
+            return finalize(load_config(span(args).subspan(2)), args[1]);
+        }
+        return caption(load_config(args));
     } catch (const exception& error) {
         cerr << "classcaption: " << error.what() << '\n';
         return 1;

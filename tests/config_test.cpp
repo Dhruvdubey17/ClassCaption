@@ -67,6 +67,7 @@ TEST_CASE("the example config file matches the defaults") {
     CHECK(parsed.backend == defaults.backend);
     CHECK(parsed.live_model == defaults.live_model);
     CHECK(parsed.final_model == defaults.final_model);
+    CHECK(parsed.final_backend == defaults.final_backend);
     CHECK(parsed.vad_model == defaults.vad_model);
     CHECK(parsed.language == defaults.language);
     CHECK(parsed.vad_threshold == doctest::Approx(defaults.vad_threshold));
@@ -103,4 +104,9 @@ TEST_CASE("--config is taken out of the arguments before the rest are applied") 
 TEST_CASE("the caption window is on by default and can be turned off") {
     CHECK(Config{}.show_window);
     CHECK_FALSE(parse_config("show_window = false").show_window);
+}
+
+TEST_CASE("the after-class pass runs on the GPU unless told otherwise") {
+    CHECK(Config{}.final_backend == Backend::metal);
+    CHECK(parse_config("final_backend = cpu").final_backend == Backend::cpu);
 }

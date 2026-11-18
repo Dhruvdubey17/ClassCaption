@@ -19,6 +19,8 @@ struct Config {
     Backend backend = Backend::coreml;
     std::filesystem::path live_model = "models/ggml-large-v3-turbo-q5_0.bin";
     std::filesystem::path final_model = "models/ggml-large-v3-q5_0.bin";
+    // Only the live model has a Core ML encoder downloaded, so the after-class pass uses the GPU.
+    Backend final_backend = Backend::metal;
     std::filesystem::path vad_model = "models/ggml-silero-v6.2.0.bin";
     std::string language = "en";
     float vad_threshold = 0.5F;

@@ -39,6 +39,7 @@ add_library(classcaption_core
     src/caption_log.cpp
     src/config.cpp
     src/file_source.cpp
+    src/finalize.cpp
     src/mic_source.cpp
     src/pipeline.cpp
     src/ring_buffer.cpp
@@ -93,6 +94,7 @@ add_executable(classcaption_tests
     tests/caption_log_test.cpp
     tests/config_test.cpp
     tests/file_source_test.cpp
+    tests/finalize_test.cpp
     tests/mic_source_test.cpp
     tests/pipeline_test.cpp
     tests/ring_buffer_test.cpp
