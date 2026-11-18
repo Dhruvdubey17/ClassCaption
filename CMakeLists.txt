@@ -18,14 +18,35 @@ add_subdirectory(third_party/whisper.cpp EXCLUDE_FROM_ALL SYSTEM)
 
 set(CLASSCAPTION_WARNINGS -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Werror)
 
-add_library(classcaption_core src/config.cpp src/ring_buffer.cpp)
+add_library(miniaudio STATIC third_party/miniaudio/miniaudio.c)
+target_include_directories(miniaudio SYSTEM PUBLIC third_party/miniaudio)
+target_compile_definitions(miniaudio PUBLIC MA_NO_DECODING MA_NO_ENCODING MA_NO_GENERATION)
+target_link_libraries(miniaudio PRIVATE "-framework CoreFoundation" "-framework CoreAudio"
+                                        "-framework AudioToolbox")
+
+add_library(classcaption_core
+    src/config.cpp
+    src/file_source.cpp
+    src/mic_source.cpp
+    src/ring_buffer.cpp
+    src/wav.cpp
+)
+target_link_libraries(classcaption_core PRIVATE miniaudio)
 target_include_directories(classcaption_core PUBLIC include)
 target_compile_options(classcaption_core PRIVATE ${CLASSCAPTION_WARNINGS})
 
 enable_testing()
-add_executable(classcaption_tests tests/main.cpp tests/config_test.cpp tests/ring_buffer_test.cpp)
+add_executable(classcaption_tests
+    tests/main.cpp
+    tests/config_test.cpp
+    tests/file_source_test.cpp
+    tests/mic_source_test.cpp
+    tests/ring_buffer_test.cpp
+    tests/wav_test.cpp
+)
 target_link_libraries(classcaption_tests PRIVATE classcaption_core)
 target_include_directories(classcaption_tests SYSTEM PRIVATE third_party/doctest)
 target_compile_options(classcaption_tests PRIVATE ${CLASSCAPTION_WARNINGS})
 target_compile_definitions(classcaption_tests PRIVATE CLASSCAPTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME classcaption_tests COMMAND classcaption_tests)
+set_tests_properties(classcaption_tests PROPERTIES TIMEOUT 300)

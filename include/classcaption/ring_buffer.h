@@ -19,7 +19,7 @@ class RingBuffer {
     // Moves up to out.size() samples into out and returns how many were moved.
     std::size_t pop(std::span<float> out);
 
-    std::size_t size() const;
+    [[nodiscard]] std::size_t size() const;
 
   private:
     std::vector<float> storage_;
