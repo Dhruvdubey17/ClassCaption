@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Speed and energy per backend. powermetrics needs sudo, so run this yourself in a terminal.
-# Keep the Mac in one power state for the whole run (plugged in, or not), with other apps closed.
+# Plug in, turn Low Power Mode off, close other apps, and leave the Mac alone while it runs:
+#   caffeinate -i scripts/measure_power.sh
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

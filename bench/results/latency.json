@@ -1,0 +1,28 @@
+{
+  "environment": {
+    "chip": "Apple M3",
+    "memory_gb": 8,
+    "macos": "26.1",
+    "classcaption_commit": "49227e2",
+    "uncommitted_changes": false,
+    "whisper_cpp": "v1.9.5",
+    "measured_at": "2026-11-17T23:54:22-05:00"
+  },
+  "talk": "RobertGupta",
+  "audio_minutes": 5.67,
+  "method": "recording played at real-time speed through the full pipeline; delay is the time from the end of each word in the audio to when it reached the screen",
+  "live": {
+    "model": "ggml-large-v3-turbo-q5_0.bin",
+    "backend": "coreml",
+    "step_ms": 1000
+  },
+  "words": 793,
+  "first_shown_ms": {
+    "median": 887,
+    "p95": 1673.3999999999999
+  },
+  "final_ms": {
+    "median": 2012,
+    "p95": 4149.599999999999
+  }
+}

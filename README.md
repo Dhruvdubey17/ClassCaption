@@ -49,9 +49,35 @@ In the window, `A-` and `A+` (or Cmd - and Cmd +) change the text size, and ther
 
 ## Results
 
-Measured on an Apple M3 with 8 GB of memory. Every number comes from `scripts/bench.py` and is traceable to a file in `bench/results/`, which also records the macOS version and commit.
+Measured on an Apple M3 with 8 GB of memory. Every number comes from `scripts/bench.py` and is traceable to a file in `bench/results/`, which also records the macOS version and the commit it ran on.
 
-<!-- RESULTS -->
+### Accuracy
+
+Word error rate on three talks from the TED-LIUM 3 test set, after Whisper's English text normalizer on both the reference and the captions. Lower is better.
+
+| Pass | Model | Backend | WER |
+|---|---|---|---|
+| Live | ggml-large-v3-turbo-q5_0.bin | coreml | 10.4% |
+| After class | ggml-large-v3-q5_0.bin | metal | 2.6% |
+
+3 TED talks, 19.1 minutes. Source: `bench/results/accuracy.json`.
+
+The after-class pass makes about a quarter of the live pass's errors, which is why the recording is kept for it. Accuracy does not depend on how fast the machine is: the recording is fed as fast as captioning keeps up, and each pass is triggered by the amount of audio, not the clock.
+
+### Speech to caption delay
+
+Time from the end of each spoken word in the audio to the moment it reached the screen, with a talk played through the full pipeline in real time on the Neural Engine, plugged in, Low Power Mode off. "First shown" is when the word first appears, in grey; "final" is when it stops changing.
+
+| Speech to caption | Median | p95 |
+|---|---|---|
+| First shown (draft) | 0.89 s | 1.67 s |
+| Final | 2.01 s | 4.15 s |
+
+793 words, 5.7 minutes played in real time. Source: `bench/results/latency.json`.
+
+### Speed and energy
+
+Not measured yet. `scripts/measure_power.sh` times live captioning on the Neural Engine, the GPU and the CPU on the same 10-minute clip and logs power with `powermetrics`. A first run was discarded because Low Power Mode was on for part of it.
 
 ## How it works
 

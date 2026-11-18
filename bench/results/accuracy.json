@@ -1,0 +1,47 @@
+{
+  "environment": {
+    "chip": "Apple M3",
+    "memory_gb": 8,
+    "macos": "26.1",
+    "classcaption_commit": "2b32649",
+    "uncommitted_changes": false,
+    "whisper_cpp": "v1.9.5",
+    "measured_at": "2026-11-17T22:05:00-05:00"
+  },
+  "dataset": "TED-LIUM release 3 test talks (distil-whisper/tedlium-long-form)",
+  "normalizer": "whisper-normalizer EnglishTextNormalizer, on reference and captions",
+  "live": {
+    "model": "ggml-large-v3-turbo-q5_0.bin",
+    "backend": "coreml",
+    "step_ms": 1000
+  },
+  "final": {
+    "model": "ggml-large-v3-q5_0.bin",
+    "backend": "metal"
+  },
+  "talks": [
+    {
+      "talk": "RobertGupta",
+      "audio_minutes": 5.67,
+      "reference_words": 877,
+      "live_errors": 81,
+      "final_errors": 10
+    },
+    {
+      "talk": "GaryFlake",
+      "audio_minutes": 5.75,
+      "reference_words": 1137,
+      "live_errors": 126,
+      "final_errors": 32
+    },
+    {
+      "talk": "EricMead_2009P_EricMead",
+      "audio_minutes": 7.65,
+      "reference_words": 1558,
+      "live_errors": 166,
+      "final_errors": 52
+    }
+  ],
+  "live_wer": 0.1044,
+  "final_wer": 0.0263
+}
