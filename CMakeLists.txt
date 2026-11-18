@@ -18,12 +18,12 @@ add_subdirectory(third_party/whisper.cpp EXCLUDE_FROM_ALL SYSTEM)
 
 set(CLASSCAPTION_WARNINGS -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Werror)
 
-add_library(classcaption_core src/config.cpp)
+add_library(classcaption_core src/config.cpp src/ring_buffer.cpp)
 target_include_directories(classcaption_core PUBLIC include)
 target_compile_options(classcaption_core PRIVATE ${CLASSCAPTION_WARNINGS})
 
 enable_testing()
-add_executable(classcaption_tests tests/main.cpp tests/config_test.cpp)
+add_executable(classcaption_tests tests/main.cpp tests/config_test.cpp tests/ring_buffer_test.cpp)
 target_link_libraries(classcaption_tests PRIVATE classcaption_core)
 target_include_directories(classcaption_tests SYSTEM PRIVATE third_party/doctest)
 target_compile_options(classcaption_tests PRIVATE ${CLASSCAPTION_WARNINGS})
