@@ -13,7 +13,7 @@
     uv run scripts/bench.py fetch       extract TED-LIUM long-form talks into bench/data
     uv run scripts/bench.py accuracy    word error rate, live and after-class
     uv run scripts/bench.py latency     speech-to-caption delay, played in real time
-    uv run scripts/bench.py speed       seconds per audio minute on coreml, metal and cpu
+    uv run scripts/bench.py speed       live captioning seconds per audio minute, per backend
     uv run scripts/bench.py power LOG   energy per audio minute from a powermetrics log
     uv run scripts/bench.py table       render bench/results/tables.md
     uv run scripts/bench.py selftest    check the parsing and math in this file
@@ -317,7 +317,7 @@ def speed() -> None:
     for backend in BACKENDS:
         out_dir = fresh_dir(RUNS_DIR / "speed" / backend)
         start = time.time()
-        finalize(clip, out_dir, LIVE_MODEL, backend)
+        caption_live(clip, out_dir, "--realtime_input", "false", "--backend", backend)
         end = time.time()
         phases[backend] = [start, end]
         runs.append({"backend": backend, "seconds": round(end - start, 2),
@@ -326,7 +326,8 @@ def speed() -> None:
         "clip": f"first {SPEED_SECONDS} s of {SPEED_TALK}",
         "audio_minutes": round(minutes, 2),
         "model": LIVE_MODEL.name,
-        "method": "whole clip transcribed in one run, including model load",
+        "method": "live captioning (a pass every 1 s of audio) fed as fast as it keeps up, "
+                  "including model load; below 60 s per audio minute keeps up with a lecture",
         "runs": runs,
         "phases": phases,
     })

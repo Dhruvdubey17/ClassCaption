@@ -89,6 +89,10 @@ Fixed 2 to 3 second chunks cut words at the chunk edges and give Whisper little 
 
 Qt is large for one window and adds a licensing question. Native Cocoa would mean Objective-C in a C++ project. Dear ImGui with GLFW is small, C++, and runs on Windows too. It redraws at most 30 times a second to save battery.
 
+### The after-class pass reuses the live path
+
+The first version gave Whisper the whole recording at once. On two of the three test talks it got stuck repeating one sentence, 97 and 88 times, and WER on those talks went to 43% and 119%. Skipping silence moved the loop from one talk to the other instead of removing it. The after-class pass now runs the same utterance-by-utterance pipeline as live captions, with the larger model and one pass per utterance, and the repeats are gone.
+
 ### Crash safety
 
 The `.vtt` is flushed after every cue and the `.wav` header is rewritten after every append, so a crash or a closed laptop keeps everything up to that moment. The after-class pass never overwrites a `.final.vtt`, which may have been corrected by hand.
