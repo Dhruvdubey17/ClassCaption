@@ -29,6 +29,7 @@ add_library(classcaption_core
     src/file_source.cpp
     src/mic_source.cpp
     src/ring_buffer.cpp
+    src/vtt_writer.cpp
     src/wav.cpp
 )
 target_link_libraries(classcaption_core PRIVATE miniaudio)
@@ -42,6 +43,7 @@ add_executable(classcaption_tests
     tests/file_source_test.cpp
     tests/mic_source_test.cpp
     tests/ring_buffer_test.cpp
+    tests/vtt_writer_test.cpp
     tests/wav_test.cpp
 )
 target_link_libraries(classcaption_tests PRIVATE classcaption_core)
