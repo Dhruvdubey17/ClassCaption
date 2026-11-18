@@ -1,6 +1,8 @@
 #include "classcaption/config.h"
 
 #include <doctest.h>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace classcaption;
@@ -53,4 +55,22 @@ TEST_CASE("mistakes fail with a message that names the problem") {
     CHECK_THROWS_WITH_AS(parse_config("backend"), "line 1: expected key = value", ConfigError);
     CHECK_THROWS_WITH_AS(apply_args(Config{}, vector<string>{"--backend"}),
                          "--backend needs a value", ConfigError);
+}
+
+TEST_CASE("the example config file matches the defaults") {
+    ifstream file(string(CLASSCAPTION_SOURCE_DIR) + "/config.example.ini");
+    REQUIRE(file);
+    stringstream text;
+    text << file.rdbuf();
+    const Config parsed = parse_config(text.str());
+    const Config defaults;
+    CHECK(parsed.backend == defaults.backend);
+    CHECK(parsed.live_model == defaults.live_model);
+    CHECK(parsed.final_model == defaults.final_model);
+    CHECK(parsed.vad_model == defaults.vad_model);
+    CHECK(parsed.language == defaults.language);
+    CHECK(parsed.vad_threshold == doctest::Approx(defaults.vad_threshold));
+    CHECK(parsed.step_ms == defaults.step_ms);
+    CHECK(parsed.output_dir == defaults.output_dir);
+    CHECK(parsed.save_audio == defaults.save_audio);
 }
