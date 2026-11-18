@@ -16,6 +16,8 @@ jobs:
         with:
           submodules: recursive
       - run: brew install llvm
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv run scripts/bench.py selftest
       - uses: actions/cache@v6
         with:
           path: models
