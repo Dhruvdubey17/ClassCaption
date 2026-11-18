@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - run: brew install llvm
+      - uses: actions/cache@v6
+        with:
+          path: models
+          key: models-${{ hashFiles('scripts/fetch_models.sh') }}
+      - run: scripts/fetch_models.sh
+      # Hosted runners give no reliable Neural Engine access, so CI covers the CPU path.
+      - run: scripts/check.sh -DCLASSCAPTION_COREML=OFF
