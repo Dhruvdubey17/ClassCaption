@@ -74,3 +74,27 @@ TEST_CASE("the example config file matches the defaults") {
     CHECK(parsed.output_dir == defaults.output_dir);
     CHECK(parsed.save_audio == defaults.save_audio);
 }
+
+TEST_CASE("input names a recording to caption; empty means the microphone") {
+    CHECK(Config{}.input.empty());
+    const vector<string> args = {"--input", "lecture.wav"};
+    CHECK(apply_args(Config{}, args).input == "lecture.wav");
+}
+
+TEST_CASE("--config is taken out of the arguments before the rest are applied") {
+    const vector<string> args = {"--backend", "cpu", "--config", "my.ini", "--step_ms=500"};
+    const auto [config_file, rest] = take_config_flag(args);
+    CHECK(config_file == "my.ini");
+    CHECK(rest == vector<string>{"--backend", "cpu", "--step_ms=500"});
+
+    const auto [inline_file, inline_rest] = take_config_flag(vector<string>{"--config=a.ini"});
+    CHECK(inline_file == "a.ini");
+    CHECK(inline_rest.empty());
+
+    const auto [no_file, all] = take_config_flag(vector<string>{"--backend", "cpu"});
+    CHECK_FALSE(no_file.has_value());
+    CHECK(all.size() == 2);
+
+    CHECK_THROWS_WITH_AS(take_config_flag(vector<string>{"--config"}), "--config needs a value",
+                         ConfigError);
+}

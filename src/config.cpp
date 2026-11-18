@@ -89,6 +89,8 @@ void apply_setting(Config& config, string_view key, string_view value) {
         config.output_dir = value;
     } else if (key == "save_audio") {
         config.save_audio = parse_bool(key, value);
+    } else if (key == "input") {
+        config.input = value;
     } else {
         throw ConfigError(format("unknown setting '{}'", key));
     }
@@ -143,6 +145,25 @@ Config apply_args(Config config, span<const string> args) {
         apply_setting(config, flag, args[++i]);
     }
     return config;
+}
+
+pair<optional<filesystem::path>, vector<string>> take_config_flag(span<const string> args) {
+    optional<filesystem::path> config_file;
+    vector<string> rest;
+    for (size_t i = 0; i < args.size(); ++i) {
+        const string_view arg = args[i];
+        if (arg.starts_with("--config=")) {
+            config_file = arg.substr(string_view("--config=").size());
+        } else if (arg == "--config") {
+            if (i + 1 == args.size()) {
+                throw ConfigError("--config needs a value");
+            }
+            config_file = args[++i];
+        } else {
+            rest.emplace_back(arg);
+        }
+    }
+    return {config_file, rest};
 }
 
 } // namespace classcaption

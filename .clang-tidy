@@ -11,7 +11,8 @@ Checks: >
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
-  -readability-magic-numbers
+  -readability-magic-numbers,
+  -readability-trailing-comma
 WarningsAsErrors: '*'
 HeaderFilterRegex: 'include/classcaption/.*'
 CheckOptions:

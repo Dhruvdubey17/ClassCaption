@@ -35,9 +35,12 @@ add_library(classcaption_core
     src/config.cpp
     src/file_source.cpp
     src/mic_source.cpp
+    src/pipeline.cpp
     src/ring_buffer.cpp
+    src/session_files.cpp
     src/speech_gate.cpp
     src/stabilizer.cpp
+    src/vtt_sink.cpp
     src/vtt_writer.cpp
     src/wav.cpp
     src/whisper_transcriber.cpp
@@ -50,17 +53,24 @@ endif()
 target_include_directories(classcaption_core PUBLIC include)
 target_compile_options(classcaption_core PRIVATE ${CLASSCAPTION_WARNINGS})
 
+add_executable(classcaption src/main.cpp)
+target_link_libraries(classcaption PRIVATE classcaption_core)
+target_compile_options(classcaption PRIVATE ${CLASSCAPTION_WARNINGS})
+
 enable_testing()
 add_executable(classcaption_tests
     tests/main.cpp
     tests/config_test.cpp
     tests/file_source_test.cpp
     tests/mic_source_test.cpp
+    tests/pipeline_test.cpp
     tests/ring_buffer_test.cpp
+    tests/session_files_test.cpp
     tests/speech_gate_test.cpp
     tests/stabilizer_test.cpp
     tests/transcriber_test.cpp
     tests/vad_test.cpp
+    tests/vtt_sink_test.cpp
     tests/vtt_writer_test.cpp
     tests/wav_test.cpp
 )
