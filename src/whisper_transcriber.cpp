@@ -1,4 +1,5 @@
 #include "classcaption/transcriber.h"
+#include "whisper_log.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -25,12 +26,6 @@ using ContextPtr = unique_ptr<whisper_context, ContextDeleter>;
 // whisper.cpp logs every load step. Keep that text only so a failed load can explain itself.
 void collect_log(ggml_log_level /*level*/, const char* text, void* log) {
     *static_cast<string*>(log) += text;
-}
-
-void print_errors_only(ggml_log_level level, const char* text, void* /*unused*/) {
-    if (level == GGML_LOG_LEVEL_ERROR) {
-        fputs(text, stderr);
-    }
 }
 
 #ifdef CLASSCAPTION_COREML
@@ -105,7 +100,7 @@ ContextPtr load_model(const Config& config, const filesystem::path& model) {
     whisper_log_set(collect_log, &log);
     ContextPtr context = config.backend == Backend::coreml ? load_with_coreml(model, params)
                                                            : load_without_coreml(model, params);
-    whisper_log_set(print_errors_only, nullptr);
+    whisper_log_set(print_whisper_errors_only, nullptr);
 
     if (!context) {
         throw TranscriberError(format("could not load {}:\n{}", model.string(), log));

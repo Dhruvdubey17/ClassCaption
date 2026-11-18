@@ -36,9 +36,11 @@ add_library(classcaption_core
     src/file_source.cpp
     src/mic_source.cpp
     src/ring_buffer.cpp
+    src/speech_gate.cpp
     src/vtt_writer.cpp
     src/wav.cpp
     src/whisper_transcriber.cpp
+    src/whisper_vad.cpp
 )
 target_link_libraries(classcaption_core PRIVATE miniaudio whisper)
 if(CLASSCAPTION_COREML)
@@ -54,7 +56,9 @@ add_executable(classcaption_tests
     tests/file_source_test.cpp
     tests/mic_source_test.cpp
     tests/ring_buffer_test.cpp
+    tests/speech_gate_test.cpp
     tests/transcriber_test.cpp
+    tests/vad_test.cpp
     tests/vtt_writer_test.cpp
     tests/wav_test.cpp
 )
