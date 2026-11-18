@@ -89,6 +89,8 @@ void apply_setting(Config& config, string_view key, string_view value) {
         config.output_dir = value;
     } else if (key == "save_audio") {
         config.save_audio = parse_bool(key, value);
+    } else if (key == "show_window") {
+        config.show_window = parse_bool(key, value);
     } else if (key == "input") {
         config.input = value;
     } else {

@@ -1,9 +1,11 @@
+#include "classcaption/caption_log.h"
 #include "classcaption/config.h"
 #include "classcaption/file_source.h"
 #include "classcaption/mic_source.h"
 #include "classcaption/pipeline.h"
 #include "classcaption/session_files.h"
 #include "classcaption/vtt_sink.h"
+#include "window/caption_window.h"
 
 #include <atomic>
 #include <csignal>
@@ -15,6 +17,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace std;
@@ -77,23 +80,55 @@ unique_ptr<AudioSource> open_source(const Config& config) {
     return make_unique<FileSource>(config.input, FileSource::Pace::real_time);
 }
 
+// Runs the pipeline on a worker thread while the window owns the main thread. Closing the window
+// ends the session, and an error on the worker is rethrown here once it has stopped.
+void run_with_window(Pipeline& pipeline, AudioSource& source, WavWriter* recording,
+                     const CaptionLog& log) {
+    atomic<bool> finished{false};
+    exception_ptr failure;
+    thread worker([&] {
+        try {
+            pipeline.run(source, stop_requested, recording);
+        } catch (...) {
+            failure = current_exception();
+        }
+        finished = true;
+    });
+    show_caption_window(log, stop_requested, finished);
+    stop_requested = true;
+    worker.join();
+    if (failure) {
+        rethrow_exception(failure);
+    }
+}
+
 int caption(const Config& config) {
     filesystem::create_directories(config.output_dir);
     const SessionFiles files = session_files(config.output_dir, local_now());
 
     TerminalSink terminal;
     VttSink captions(files.captions);
-    Pipeline pipeline(config, {&terminal, &captions});
+    CaptionLog window_log;
+    vector<CaptionSink*> sinks = {&terminal, &captions};
+    if (config.show_window) {
+        sinks.push_back(&window_log);
+    }
+    Pipeline pipeline(config, sinks);
     const unique_ptr<AudioSource> source = open_source(config);
     optional<WavWriter> recording;
     if (config.save_audio) {
         recording.emplace(files.audio);
     }
+    WavWriter* const recording_or_null = recording ? &*recording : nullptr;
 
     cerr << "Captioning " << (config.input.empty() ? "the microphone" : config.input.string())
          << ". Captions go to " << files.captions.string() << ". Press Ctrl+C to stop.\n";
     signal(SIGINT, [](int /*signal*/) { stop_requested = true; });
-    pipeline.run(*source, stop_requested, recording ? &*recording : nullptr);
+    if (config.show_window) {
+        run_with_window(pipeline, *source, recording_or_null, window_log);
+    } else {
+        pipeline.run(*source, stop_requested, recording_or_null);
+    }
     cerr << "Saved " << files.captions.string() << '\n';
     return 0;
 }

@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
 project(ClassCaption LANGUAGES C CXX)
+if(APPLE)
+    # GLFW's macOS window code is Objective-C.
+    enable_language(OBJC)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,6 +36,7 @@ target_link_libraries(miniaudio PRIVATE "-framework CoreFoundation" "-framework 
                                         "-framework AudioToolbox")
 
 add_library(classcaption_core
+    src/caption_log.cpp
     src/config.cpp
     src/file_source.cpp
     src/mic_source.cpp
@@ -53,13 +58,39 @@ endif()
 target_include_directories(classcaption_core PUBLIC include)
 target_compile_options(classcaption_core PRIVATE ${CLASSCAPTION_WARNINGS})
 
-add_executable(classcaption src/main.cpp)
-target_link_libraries(classcaption PRIVATE classcaption_core)
+include(FetchContent)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 3.5.1
+                     GIT_SHALLOW TRUE SYSTEM)
+FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git GIT_TAG v1.93.0
+                     GIT_SHALLOW TRUE SYSTEM)
+FetchContent_MakeAvailable(glfw imgui)
+
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+target_link_libraries(imgui PUBLIC glfw "-framework OpenGL")
+# Apple deprecated OpenGL but still ships it; it keeps the window code portable to Windows.
+target_compile_definitions(imgui PUBLIC GL_SILENCE_DEPRECATION)
+
+add_executable(classcaption src/main.cpp src/window/caption_window.cpp)
+target_include_directories(classcaption PRIVATE src)
+target_link_libraries(classcaption PRIVATE classcaption_core imgui)
 target_compile_options(classcaption PRIVATE ${CLASSCAPTION_WARNINGS})
 
 enable_testing()
 add_executable(classcaption_tests
     tests/main.cpp
+    tests/caption_log_test.cpp
     tests/config_test.cpp
     tests/file_source_test.cpp
     tests/mic_source_test.cpp

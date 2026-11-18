@@ -73,6 +73,7 @@ TEST_CASE("the example config file matches the defaults") {
     CHECK(parsed.step_ms == defaults.step_ms);
     CHECK(parsed.output_dir == defaults.output_dir);
     CHECK(parsed.save_audio == defaults.save_audio);
+    CHECK(parsed.show_window == defaults.show_window);
 }
 
 TEST_CASE("input names a recording to caption; empty means the microphone") {
@@ -97,4 +98,9 @@ TEST_CASE("--config is taken out of the arguments before the rest are applied") 
 
     CHECK_THROWS_WITH_AS(take_config_flag(vector<string>{"--config"}), "--config needs a value",
                          ConfigError);
+}
+
+TEST_CASE("the caption window is on by default and can be turned off") {
+    CHECK(Config{}.show_window);
+    CHECK_FALSE(parse_config("show_window = false").show_window);
 }

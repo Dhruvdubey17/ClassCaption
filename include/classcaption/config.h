@@ -25,6 +25,7 @@ struct Config {
     int step_ms = 1000;
     std::filesystem::path output_dir = "lectures";
     bool save_audio = true;
+    bool show_window = true;
     // A WAV file to caption instead of the microphone, played at real-time speed.
     std::filesystem::path input;
 };
