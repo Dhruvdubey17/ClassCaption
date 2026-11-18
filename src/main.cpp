@@ -1,5 +1,6 @@
 #include "classcaption/caption_log.h"
 #include "classcaption/config.h"
+#include "classcaption/event_log_sink.h"
 #include "classcaption/file_source.h"
 #include "classcaption/finalize.h"
 #include "classcaption/mic_source.h"
@@ -77,7 +78,9 @@ unique_ptr<AudioSource> open_source(const Config& config) {
     if (config.input.empty()) {
         return make_unique<MicSource>();
     }
-    return make_unique<FileSource>(config.input, FileSource::Pace::real_time);
+    return make_unique<FileSource>(config.input, config.realtime_input
+                                                     ? FileSource::Pace::real_time
+                                                     : FileSource::Pace::as_fast_as_possible);
 }
 
 // Runs the pipeline on a worker thread while the window owns the main thread. Closing the window
@@ -113,6 +116,10 @@ int caption(const Config& config) {
     if (config.show_window) {
         sinks.push_back(&window_log);
     }
+    optional<EventLogSink> event_log;
+    if (!config.event_log.empty()) {
+        sinks.push_back(&event_log.emplace(config.event_log));
+    }
     Pipeline pipeline(config, sinks);
     const unique_ptr<AudioSource> source = open_source(config);
     optional<WavWriter> recording;
@@ -124,6 +131,9 @@ int caption(const Config& config) {
     cerr << "Captioning " << (config.input.empty() ? "the microphone" : config.input.string())
          << ". Captions go to " << files.captions.string() << ". Press Ctrl+C to stop.\n";
     signal(SIGINT, [](int /*signal*/) { stop_requested = true; });
+    if (event_log) {
+        event_log->mark_start();
+    }
     if (config.show_window) {
         run_with_window(pipeline, *source, recording_or_null, window_log);
     } else {

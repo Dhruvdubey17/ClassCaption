@@ -30,6 +30,11 @@ struct Config {
     bool show_window = true;
     // A WAV file to caption instead of the microphone, played at real-time speed.
     std::filesystem::path input;
+    // false feeds `input` as fast as captioning keeps up. Captions come out the same, because
+    // passes are triggered by the amount of audio, not the clock. Used for accuracy runs.
+    bool realtime_input = true;
+    // When set, logs when each word appeared on screen, for measuring caption delay.
+    std::filesystem::path event_log;
 };
 
 class ConfigError : public std::runtime_error {

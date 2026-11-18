@@ -75,6 +75,7 @@ TEST_CASE("the example config file matches the defaults") {
     CHECK(parsed.output_dir == defaults.output_dir);
     CHECK(parsed.save_audio == defaults.save_audio);
     CHECK(parsed.show_window == defaults.show_window);
+    CHECK(parsed.realtime_input == defaults.realtime_input);
 }
 
 TEST_CASE("input names a recording to caption; empty means the microphone") {
@@ -109,4 +110,13 @@ TEST_CASE("the caption window is on by default and can be turned off") {
 TEST_CASE("the after-class pass runs on the GPU unless told otherwise") {
     CHECK(Config{}.final_backend == Backend::metal);
     CHECK(parse_config("final_backend = cpu").final_backend == Backend::cpu);
+}
+
+TEST_CASE("measurement settings are off by default") {
+    const Config config;
+    CHECK(config.event_log.empty());
+    CHECK(config.realtime_input);
+    const Config fast = parse_config("realtime_input = false\nevent_log = events.tsv");
+    CHECK_FALSE(fast.realtime_input);
+    CHECK(fast.event_log == "events.tsv");
 }

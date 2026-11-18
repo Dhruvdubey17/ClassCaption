@@ -95,6 +95,10 @@ void apply_setting(Config& config, string_view key, string_view value) {
         config.show_window = parse_bool(key, value);
     } else if (key == "input") {
         config.input = value;
+    } else if (key == "realtime_input") {
+        config.realtime_input = parse_bool(key, value);
+    } else if (key == "event_log") {
+        config.event_log = value;
     } else {
         throw ConfigError(format("unknown setting '{}'", key));
     }

@@ -38,6 +38,7 @@ target_link_libraries(miniaudio PRIVATE "-framework CoreFoundation" "-framework 
 add_library(classcaption_core
     src/caption_log.cpp
     src/config.cpp
+    src/event_log_sink.cpp
     src/file_source.cpp
     src/finalize.cpp
     src/mic_source.cpp
@@ -93,6 +94,7 @@ add_executable(classcaption_tests
     tests/main.cpp
     tests/caption_log_test.cpp
     tests/config_test.cpp
+    tests/event_log_sink_test.cpp
     tests/file_source_test.cpp
     tests/finalize_test.cpp
     tests/mic_source_test.cpp
