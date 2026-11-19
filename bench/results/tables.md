@@ -11,3 +11,11 @@
 | Final | 2.01 s | 4.15 s |
 
 793 words, 5.7 minutes played in real time. Source: `bench/results/latency.json`.
+
+| Backend | Seconds per audio minute | Joules per audio minute, above idle |
+|---|---|---|
+| coreml | 34.53 | 187.9 |
+| metal | 81.61 | 560.1 |
+| cpu | 206.04 | 2040.2 |
+
+ggml-large-v3-turbo-q5_0.bin, first 600 s of AimeeMullins. Sources: `bench/results/speed.json`, `bench/results/energy.json`.

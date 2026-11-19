@@ -1,0 +1,42 @@
+{
+  "environment": {
+    "chip": "Apple M3",
+    "memory_gb": 8,
+    "macos": "26.1",
+    "classcaption_commit": "fea5c95",
+    "uncommitted_changes": false,
+    "whisper_cpp": "v1.9.5",
+    "measured_at": "2026-11-18T18:00:49-05:00"
+  },
+  "source": "powermetrics cpu_power, gpu_power, ane_power at 500 ms, during scripts/bench.py speed",
+  "speed_measured_at": "2026-11-18T17:42:41-05:00",
+  "runs": [
+    {
+      "backend": "coreml",
+      "joules_per_audio_minute_above_idle": {
+        "cpu": 6.0,
+        "gpu": 24.3,
+        "ane": 157.5,
+        "total": 187.9
+      }
+    },
+    {
+      "backend": "metal",
+      "joules_per_audio_minute_above_idle": {
+        "cpu": -18.1,
+        "gpu": 578.2,
+        "ane": 0.0,
+        "total": 560.1
+      }
+    },
+    {
+      "backend": "cpu",
+      "joules_per_audio_minute_above_idle": {
+        "cpu": 2045.0,
+        "gpu": -4.9,
+        "ane": 0.1,
+        "total": 2040.2
+      }
+    }
+  ]
+}

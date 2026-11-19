@@ -77,7 +77,17 @@ Time from the end of each spoken word in the audio to the moment it reached the 
 
 ### Speed and energy
 
-Not measured yet. `scripts/measure_power.sh` times live captioning on the Neural Engine, the GPU and the CPU on the same 10-minute clip and logs power with `powermetrics`. A first run was discarded because Low Power Mode was on for part of it.
+Live captioning (a pass every second of audio) on the same 10-minute talk with each backend, fed as fast as it keeps up, model load included. Energy is CPU, GPU and Neural Engine power from `powermetrics` during each run, minus the idle draw measured just before. Plugged in, Low Power Mode off. Lower is better. To keep up with a lecture, a backend needs less than 60 seconds per audio minute.
+
+| Backend | Seconds per audio minute | Joules per audio minute, above idle |
+|---|---|---|
+| coreml (Neural Engine) | 34.5 | 188 |
+| metal (GPU) | 81.6 | 560 |
+| cpu | 206.0 | 2040 |
+
+ggml-large-v3-turbo-q5_0.bin, first 600 s of the AimeeMullins talk. Sources: `bench/results/speed.json`, `bench/results/energy.json`.
+
+The Neural Engine is about 6 times faster than the CPU and uses about a tenth of the energy. It is also the only backend here fast enough for live captions on continuous speech. A first run was discarded because Low Power Mode was on for part of it.
 
 ## How it works
 
@@ -136,6 +146,7 @@ Every tunable lives in `Config`, read from `config.ini` with flags on top. Chang
 - The caption window draws its own text, so screen readers cannot read it. The `.vtt` file can be read with any screen reader.
 - No speaker labels and no translation.
 - If a speaker repeats a word right where a caption is finalized ("the the"), the repeat is dropped. That check is what stops timing drift from duplicating words.
+- On the M3 tested, only the Neural Engine keeps up live with the default model and a 1 s step. The GPU and CPU fallbacks fall behind on continuous speech, and once 30 s of audio is waiting the microphone starts dropping samples. A larger `step_ms` or a smaller model is the workaround.
 - The first launch on a Mac is slow while macOS compiles the Core ML encoder for the Neural Engine. Later launches reuse it.
 - Only the live model has a Core ML encoder downloaded, so the after-class pass runs on the GPU.
 - With `save_audio = false` there is no recording, so there is no after-class pass.

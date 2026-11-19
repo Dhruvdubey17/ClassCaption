@@ -1,0 +1,50 @@
+{
+  "environment": {
+    "chip": "Apple M3",
+    "memory_gb": 8,
+    "macos": "26.1",
+    "classcaption_commit": "fea5c95",
+    "uncommitted_changes": false,
+    "whisper_cpp": "v1.9.5",
+    "measured_at": "2026-11-18T17:42:41-05:00"
+  },
+  "clip": "first 600 s of AimeeMullins",
+  "audio_minutes": 10.0,
+  "model": "ggml-large-v3-turbo-q5_0.bin",
+  "method": "live captioning (a pass every 1 s of audio) fed as fast as it keeps up, including model load; below 60 s per audio minute keeps up with a lecture",
+  "runs": [
+    {
+      "backend": "coreml",
+      "seconds": 345.33,
+      "seconds_per_audio_minute": 34.53
+    },
+    {
+      "backend": "metal",
+      "seconds": 816.15,
+      "seconds_per_audio_minute": 81.61
+    },
+    {
+      "backend": "cpu",
+      "seconds": 2060.45,
+      "seconds_per_audio_minute": 206.04
+    }
+  ],
+  "phases": {
+    "idle": [
+      1795038508.522042,
+      1795038538.527297
+    ],
+    "coreml": [
+      1795038538.529004,
+      1795038883.860227
+    ],
+    "metal": [
+      1795038883.861527,
+      1795039700.008668
+    ],
+    "cpu": [
+      1795039700.009532,
+      1795041760.454784
+    ]
+  }
+}
