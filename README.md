@@ -8,6 +8,8 @@ Live lecture captions that run entirely on a Mac, with Wi-Fi off, for students w
 
 The demo plays the 11-second clip that ships with whisper.cpp through the live pipeline at real-time speed, on the Neural Engine. Each line shows in grey first and turns white once two passes agree on it.
 
+Slides: a 12-slide walkthrough of the problem, the pipeline, and the measured results is [on Google Slides](https://docs.google.com/presentation/d/1cfprAGBF7sUVt_HOfBUW-dhP32LrOrrt-qYLu8251Xs/edit?usp=sharing).
+
 ## How to run
 
 Needs an Apple Silicon Mac, Homebrew, and about 3 GB for models.
